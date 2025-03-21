@@ -1,0 +1,63 @@
+html {
+  scroll-behavior: smooth;
+}
+
+.bg-navbar {
+  color:rgb(26, 15, 77)
+}
+
+.col-navbar {
+    position: relative;
+    float: left;
+    width: 15rem;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+@media(min-width:992px) {
+  #sidebar {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 15rem;
+  }
+}
+
+.profile-pic {
+  height: 150px;
+  width: auto;
+  border: 5px solid rgb(166, 187, 186);
+}
+
+.nav-item-text {
+  color:rgb(166, 187, 186);
+}
+
+.nav-item-text:hover{
+  color:white;
+}
+
+.name-header{
+  font-size: 3.5em;
+  font-weight: bold;
+}
+
+.section-header {
+  font-size: 2.5em;
+  font-weight: bold;
+}
+
+.subheading {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.content-heading {
+  font-size: 1.15rem;
+  font-style: italic;
+}
+
+.link-icon {
+  font-size: 2rem;
+}
