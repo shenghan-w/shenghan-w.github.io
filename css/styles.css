@@ -34,8 +34,15 @@ html {
   color:rgb(166, 187, 186);
 }
 
-.nav-item-text:hover{
+.nav-item-text:hover {
   color:white;
+}
+
+.link-item {
+  color:rgb(26, 15, 77);
+}
+.link-item:hover {
+  color: rgb(166, 187, 186);
 }
 
 .name-header{
@@ -46,18 +53,30 @@ html {
 .section-header {
   font-size: 2.5em;
   font-weight: bold;
+  color: rgb(110, 127, 126);
 }
 
 .subheading {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: bold;
 }
 
-.content-heading {
+.content-text {
+  font-size: 1rem;
+}
+
+.education-heading {
   font-size: 1.15rem;
   font-style: italic;
 }
 
-.link-icon {
-  font-size: 2rem;
+.project-img {
+  width: 200px;
+  height: auto;
+}
+
+.custom-icon {
+  height: 16px;
+  width: auto;
+  vertical-align: -1px;
 }
