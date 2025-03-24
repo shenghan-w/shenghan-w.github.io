@@ -31,15 +31,15 @@ html {
 }
 
 .nav-item-text {
-  color:rgb(166, 187, 186);
+  color: rgb(166, 187, 186);
 }
 
 .nav-item-text:hover {
-  color:white;
+  color: white;
 }
 
 .link-item {
-  color:rgb(26, 15, 77);
+  color: rgb(26, 15, 77);
 }
 .link-item:hover {
   color: rgb(166, 187, 186);
