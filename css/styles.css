@@ -2,10 +2,6 @@ html {
   scroll-behavior: smooth;
 }
 
-.bg-navbar {
-  color:rgb(26, 15, 77)
-}
-
 .col-navbar {
     position: relative;
     float: left;

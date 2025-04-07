@@ -1,0 +1,70 @@
+html {
+  scroll-behavior: smooth;
+}
+
+.col-navbar {
+    position: relative;
+    float: left;
+    width: 22rem;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+@media(min-width:992px) {
+  #sidebar {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 22rem;
+  }
+}
+
+.ar-logo {
+  height: 50px;
+  width: auto;
+  display: inline-block;
+}
+
+.nav-header {
+  font-size: 1.75rem;
+  color: rgb(22, 84, 11);
+}
+
+.nav-item-text {
+  font-size: 1.2rem;
+  color: rgb(22, 84, 11);
+}
+
+.nav-item-text:hover {
+  color: rgb(166, 187, 186);
+}
+
+.nav-item-current {
+  font-weight: bold;
+}
+
+.right-border {
+  border-right: solid  rgb(166, 187, 186);
+}
+
+.ar-icons {
+  height: 500px;
+  aspect-ratio: initial;
+}
+
+.ar-link-text {
+  font-size: 1.5rem;
+  color: rgb(22, 84, 11)
+}
+.ar-link-text:hover {
+  color:rgb(166, 187, 186);
+}
+
+.footer-text {
+  font-size: 1.15rem;
+  color:rgb(26, 15, 77)
+}
+.footer-text:hover {
+  color:rgb(166, 187, 186)
+}
