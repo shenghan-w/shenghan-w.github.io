@@ -1,0 +1,34 @@
+---
+title: Shen's Climbing Stuff
+description: This is my portfolio of stuff.
+tableOfContents: false
+sidebar:
+  label: About My Climbing Blog
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+import { Picture } from 'astro:assets';
+import profilePic from "@assets/climbing/rock-profile.png";
+
+## About My Climbing
+
+I've been rock climbing since 2017! I quickly took to bouldering, and am mainly inspired by outdoor projects.
+This section of my stuff is part session blog and part climbing notes.
+
+This might be a bit of an unconventional way to document my climbing, but structure leads to consistency, leads to progress (at least for me). 
+The hope is that this documentation process leads to better analysis and understanding for my own climbing.
+
+Besides, as a piece of media, it will be cool to look back upon as I work and (hopefully!) finish new things.
+
+<LinkCard
+  title="My Current Project"
+  href="./projects/tetris"
+	description="Tetris"
+/>
+
+Here's a picture of myself trying Lost in Space, up in Rocky Mountain National Park:
+
+<Picture 
+  src={profilePic}
+  alt="Climbing Profile Picture"
+/>

@@ -1,0 +1,191 @@
+---
+title: "HtB Machine: Busqueda"
+description: Write-Up for the HtB Busqueda machine.
+sidebar:
+  label: Busqueda
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import { Image } from 'astro:assets'
+import nmapBusqueda from '@assets/security/busqueda/1-nmap.png'
+
+## Enumeration
+
+Beginning with an nmap scan:
+
+<Image 
+  src={nmapBusqueda}
+  priority
+  alt="Nmap scan for Busqueda"
+/>
+
+We have an open SSH port, which could be useful later.
+On port 80, our target is serving a website, http:/<i></i>/searcher.htb/, using Apache 2.4.52.
+
+Let's add our target IP and related site to our **/etc/hosts** file and navigate to it.
+
+![Searcher.htb](@assets/security/busqueda/2-searcher.png)
+
+Our target's website is a search engine, pulling from a variety of available options. Running a test search we see:
+
+![Search result](@assets/security/busqueda/3-searchresult.png)
+
+And if we instead select the auto redirect option:
+
+![Search result](@assets/security/busqueda/4-redirect.png)
+
+The resulting search shows as:
+
+![Search result](@assets/security/busqueda/5-redirectresult.png)
+
+So let's summarize the target's webapp:
+- The target is serving a search engine collection, that runs our inputs through the selected engine as the query
+- It will generate a URL based on our input 
+- With the autoredirect option, the webapp will navigate automatically to that URL.
+
+## Vulnerability
+
+At the bottom of our webpage we can see some information about the framework and tools used:
+
+![Searchor version](@assets/security/busqueda/6-searchor.png)
+
+Flask is a commonly used Python web framework, and [Searchor](https://github.com/ArjunSharda/Searchor) is a Python library for searching and web scraping.
+Since we have a version number for Searchor, we can start with that when looking for a vulnerability.
+
+Looking for a CVE specific to Searchor, we find:
+
+![Searchor vulnerability](@assets/security/busqueda/7-searchor-vuln.png)
+
+This vulnerability affects all versions 2.4.1 and lower, which includes us! This GitHub listing also leads to more explanations and POCs that we can use.
+Looking at the [first linked POC](https://github.com/nikn0laty/Exploit-for-Searchor-2.4.0-Arbitrary-CMD-Injection), there's a more thorough explanation of the vulnerability.
+
+### Understanding the Exploit
+
+Before we run anything, let's first try to understand the vulnerability. The POC focuses on the function call of `eval()`.
+Indeed, if we trace back to Searchor's 2.4.2 release, we can see the lines that were changed to take out the `eval()` call.
+
+![Searchor patch](@assets/security/busqueda/25-searchor-fix.png)
+
+On the [Python docs page](https://docs.python.org/3/library/functions.html#eval), we can find out more about this function. 
+`eval()` parses and executes whatever is inside the parentheses, and even on the Python docs page it warns about arbitrary code execution with this function.
+
+Returning to the code for Searchor, we can surmise that our plan should be to call Searchor's `search` function, and design a `query` that will execute arbitrary code inside of `eval`.
+We also could manipulate the `engine` argument, but this is less likely to produce the code execution that we're looking for.
+
+The POC from earlier presents all this neatly for us:
+- Writes a reverse shell to execute
+- Encodes it in base64
+- Wraps everything in an `__import(os)__.system()` so that our code can execute in a subshell: [docs.Python](https://docs.python.org/3/library/os.html#os.system)
+- Calls Searchor with a POST request to execute our reverse shell
+
+### Running the Exploit
+
+Let's run the exploit, first copying the repository over to our local machine. On a second terminal, we'll set up a netcat listener.
+
+![Running exploit](@assets/security/busqueda/8-exploit.png)
+
+And, we receive our reverse shell:
+
+![Reverse Shell](@assets/security/busqueda/9-rs.png)
+
+With our **svc** user, we can read the user flag in our home folder.
+
+## Privilege Escalation
+
+### Enumeration Pt. 2
+
+First, let's upgrade our shell functionality:
+
+<Steps>
+1. `python3 -c 'import pty; pty.spawn("/bin/bash")'`
+2. Followed by the *Ctrl-Z* input.
+3. `stty raw -echo; fg`
+4. `export TERM=xterm`
+</Steps>
+
+As we look through our target's filesystem, a couple of files contain interesting information. The first one found is the **.gitconfig** file in our home directory:
+
+![.gitconfig](@assets/security/busqueda/10-gitconfig.png)
+
+From this file it looks like we have username information.
+Next, we can browse through the web app files, and inside the **.git** folder we find credentials in plaintext:
+
+![.git config file](@assets/security/busqueda/11-config.png)
+
+This file contains a username password combination matching the username we found, and it also points to a site called *gitea.searcher.htb* Let's add it to our **/etc/hosts** file and check it out.
+
+![Gitea landing page](@assets/security/busqueda/12-searcher-gitea.png)
+
+We can also search for Gitea and find their main page, explaining that they are a DevOps platform.
+
+![Gitea main page](@assets/security/busqueda/13-aboutgitea.png)
+
+So it appears Searcher is using this platform for their change management. We can try logging in with our *cody* credentials we found:
+
+![Logged in as Cody](@assets/security/busqueda/14-ascody.png)
+
+From the repository history, it looks like there is another account called *administrator*, which presumably has elevated privileges that we currently do not have.
+We currently can't access any of the repositories associated with that user.
+
+Going back to our terminal, let's try to check for sudo permissions. We are prompted for a password, and we can enter the credentials we currently have.
+
+![Running sudo -l](@assets/security/busqueda/15-sudol.png)
+
+There's one non-default python script, called **system-checkup.py**, which we have permission to run as root. We have to run it with arguments, so we'll first run it with `*`, as listed. When we run it, we get a little bit more details about its options:
+
+![system-checkup.py options](@assets/security/busqueda/16-system-checkup.png)
+
+Let's run the first option, `docker-ps`.
+
+![docker-ps](@assets/security/busqueda/17-docker-ps.png)
+
+It looks like there are two containerized databases on our target. 
+Running the second command, `docker-inspect`, takes a few more options, as show [in the documentation](https://docs.docker.com/reference/cli/docker/inspect/) from Docker.
+Specifically, at the [bottom of the page](https://docs.docker.com/reference/cli/docker/inspect/#get-a-subsection-in-json-format), we can see how to obtain a subsection of the data in JSON format.
+In our case, we'd like to enumerate all the data, so let's use a `*` selector to grab all the data out of our containers.
+
+When we run our command with *gitea*, we, understandably, get a large dump of JSON data that's very difficult to parse. `jq` is a command-line utility used to format and parse JSON.
+We could copy our output to our local machine, but conveniently, our target has `jq` already installed, so we can simply pipe our command through it.
+
+![gitea-docker JSON](@assets/security/busqueda/18-gitea-docker.png)
+
+There's a decent bit of data on the screen, but it's not hard to find an interesting bit:
+
+![gitea-creds](@assets/security/busqueda/19-gitea-creds.png)
+
+Let's also enumerate our *mysql_db*:
+
+![mysql-docker JSON](@assets/security/busqueda/20-mysql.png)
+
+![mysql-creds](@assets/security/busqueda/21-mysql-creds.png)
+
+Finally, we can try our last sudo option of `system-checkup.py full-checkup`, but this just gives us errors.
+
+### Administrator Gitea
+
+With our newfound credentials, let's go back to *gitea.searcher.htb*, and try to log into the *administrator* account. When we try the gitea database password, we are granted access!
+Now, we can see that the *administrator* account has a scripts repository.
+
+![Administrator scripts](@assets/security/busqueda/22-admin-scripts.png)
+
+Looking through the script sourcecode, the most interesting to us is the `full-checkup` section inside of the `system-checkup.py` script. We can now understand why we were getting errors when running this option.
+
+![Full Checkup Option](@assets/security/busqueda/23-fullcheckup.png)
+
+It looks like the script points to a relative path for `full-checkup.sh`, and not an absolute path. It is expecting `full-checkup.sh` to be in the same folder as where the `system-checkup.py` is run.
+
+## Exploit to Sudo
+
+So our path to exploit is to:
+<Steps>
+1. Create our own `full-checkup.sh` file
+2. Write into our `full-checkup.sh` a reverse shell
+3. Set up our Netcat listener to catch the shell
+3. Run our custom script with root permissions using `system-checkup.py`, making sure our current directory is where our script is located
+</Steps>
+
+![New Full Checkup](@assets/security/busqueda/24-new-fullcheckup.png)
+
+And we catch our reverse shell as root!
+
+![Root shell](@assets/security/busqueda/x-root.png)
