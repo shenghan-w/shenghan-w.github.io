@@ -8,6 +8,7 @@ import starlightUtils from "@lorenzo_lewis/starlight-utils";
 export default defineConfig({
 	site: 'http://shenghan-w.github.io',
 	base: '/portfolio',
+	
 	integrations: [
 		starlight({
 
