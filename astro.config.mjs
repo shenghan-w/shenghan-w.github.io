@@ -7,8 +7,7 @@ import starlightUtils from "@lorenzo_lewis/starlight-utils";
 // https://astro.build/config
 export default defineConfig({
 	site: 'http://shenghan-w.github.io',
-	base: '/portfolio',
-	
+
 	integrations: [
 		starlight({
 
