@@ -1,0 +1,211 @@
+---
+title: "Exercise Object"
+description: API doc for the Exercise object.
+sidebar:
+  label: Exercise
+---
+
+import { Tabs, TabItem, Aside, LinkCard } from '@astrojs/starlight/components';
+
+This is an object that represents one specific exercise in the database.
+
+## Endpoints
+
+<LinkCard
+    title="Create an Exercise"
+    href="#create-an-exercise"
+    description="POST /exercises"
+/>
+<LinkCard
+    title="Update an Exercise"
+    href="#update-an-exercise"
+    description="POST /exercises/:id"
+/><LinkCard
+    title="Retrieve an Exercise"
+    href="#retrieve-an-exercise"
+    description="GET /exercises/:id"
+/><LinkCard
+    title="Retrieve all Exercises"
+    href="#retrieve-all-exercises"
+    description="GET /exercises"
+/><LinkCard
+    title="Delete an Exercise"
+    href="#delete-an-exercise"
+    description="DELETE /exercises/:id"
+/>
+
+## Attributes
+
+***
+`id`: string\
+Unique identifier for each exercise object.
+***
+`object`: string\
+String representing object type.
+***
+`name`: string\
+The name of the exercise.
+***
+`primary_muscle`: enum\
+The primary working muscle group for the exercise.\
+Possible values:\
+`legs` | `back` | `shoulders` | `chest` | `core` | `fingers`
+***
+`secondary_muscle`: nullable enum\
+Secondary working muscle groups for the exercise.\
+Possible values:\
+`legs` | `back` | `shoulders` | `chest` | `core` | `fingers` | `null`
+***
+`is_sets_reps`: boolean\
+Denotes whether or not the exercise is measured by a reps/sets scheme.
+***
+`is_time_under_tension`: boolean\
+Denotes whether or not the exercise is measured by duration.
+***
+
+<Aside type="tip" icon="document" title="Exercise Object">
+```json
+{
+    "id": "123456789",
+    "object": "exercise",
+    "name": "Deadlift",
+    "primary_muscle": "legs",
+    "secondary_muscle": "back",
+    "is_sets_reps:": true,
+    "is_time_under_tension": false
+}
+```
+</Aside>
+
+## Create an Exercise
+
+Creates a new exercise with the following parameters.
+
+### Parameters
+`name`: string\
+`primary_muscle`: enum\
+`secondary_muscle`: enum\
+`is_set_reps`: boolean\
+`is_time_under_tension`: boolean
+***
+
+### Response
+Returns Exercise object if it was successfully created. Raises an error if parameters are invalid.
+```json
+{
+    "id": "123456789",
+    "object": "exercise",
+    "name": "Deadlift",
+    "primary_muscle": "legs",
+    "secondary_muscle": "back",
+    "is_sets_reps:": true,
+    "is_time_under_tension": false
+}
+```
+
+## Update an Exercise
+
+Updates the parameters of an existing exercise. Accepts same parameters as creating an Exercise.
+
+### Parameters
+***
+`name`: string\
+`primary_muscle`: enum\
+`secondary_muscle`: enum\
+`is_set_reps`: boolean\
+`is_time_under_tension`: boolean
+***
+
+### Response
+Returns Exercise object if it was successfully modified. Raises an error if parameters are invalid.
+```json
+{
+    "id": "123456789",
+    "object": "exercise",
+    "name": "Deadlift",
+    "primary_muscle": "legs",
+    "secondary_muscle": "back",
+    "is_sets_reps:": true,
+    "is_time_under_tension": false
+}
+```
+
+## Retrieve an Exercise
+
+Retrieves information for a specific Exercise object.
+
+### Parameters
+***
+*None*
+***
+
+### Response
+Returns Exercise object if it was successfully retrieved. Raises an error if id was not found.
+```json
+{
+    "id": "123456789",
+    "object": "exercise",
+    "name": "Deadlift",
+    "primary_muscle": "legs",
+    "secondary_muscle": "back",
+    "is_sets_reps:": true,
+    "is_time_under_tension": false
+}
+```
+
+## Retrieve all Exercises
+
+Returns a list of all exercises in the database.
+
+### Parameters
+***
+*None*
+***
+
+### Response
+Returns a dictionary object containing an array of Exercises inside a `data` property. Each entry in the array will be a distinct Exercise object.
+```json
+{
+    "object": "list",
+    "url": "/exercises",
+    "data": [
+        {
+            "id": "123456789",
+            "object": "exercise",
+            "name": "Deadlift",
+            "primary_muscle": "legs",
+            "secondary_muscle": "back",
+            "is_sets_reps:": true,
+            "is_time_under_tension": false
+        }
+        {
+            "id": "987654321",
+            "object": "exercise",
+            "name": "Overhead Press",
+            "primary_muscle": "shoulders",
+            "secondary_muscle": null,
+            "is_sets_reps:": true,
+            "is_time_under_tension": false
+        }
+    ]
+}
+```
+
+## Delete an Exercise
+
+Permanently deletes an exercise.
+
+### Parameters
+***
+*None*
+***
+
+### Response
+Returns object with a deleted parameter. Parameter states true if deletion was successful. Raises an error if the `id` was not found.
+```json
+{
+    "id": "123456789",
+    "object": "exercise",
+    "deleted": true
+}
+```

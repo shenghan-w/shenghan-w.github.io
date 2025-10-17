@@ -1,0 +1,118 @@
+---
+title: "HtB Machine: Sau"
+description: Write-up for the HtB Sau machine.
+sidebar:
+  label: Sau
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import { Image } from 'astro:assets'
+import nmapSau from '@assets/security/sau/1-nmap.png'
+
+## Enumeration
+
+As usual, let's begin with an Nmap scan.
+
+<Image src={nmapSau} priority alt="Nmap scan for Editor" />
+
+There's a few bits of information to digest from the scan.
+1. An SSH port is open, which could be useful later.
+2. The usual TCP port 80 seems to be filtered, so we really don't have anything to go on there.
+3. There seems to be a web server open on port 55555 called Request Baskets.
+4. We get a lot of information back from port 55555, including one unrecognized service.
+
+In any case, let's add the IP to our **/etc/hosts** file and take a look on port 55555.
+
+![Request Baskets page](@assets/security/sau/2-rb-webpage.png)
+
+### Request Baskets
+
+We can try creating a basket to see what happens.
+
+![Testing Request Basket](@assets/security/sau/3-testbasket.png)
+
+Clicking 'Open Basket' will navigate us to our basket:
+
+![Result of Test Request Basket](@assets/security/sau/4-basket.png)
+
+In our basket, it tells us that requests will be collected there. We can run *curl* to check it out.
+
+![Curling to test Request Basket](@assets/security/sau/5-curl-testbasket.png)
+
+![Result of Curl Test](@assets/security/sau/6-curl-test-result.png)
+
+We indeed see that our request is stored there! Currently we're not sure how this service handles these requests and if there's a way in to our target.
+
+We can also find on our target webpage a version number for this service, which is always a good place to start to search for vulnerabilities.
+
+![Result of Test Request Basket](@assets/security/sau/7-basket-version.png)
+
+We can click on this link and find out a little more about the Request Baskets web service and the functionality offered by browsing the [documentation](https://github.com/darklynx/request-baskets).
+
+## Vulnerability
+
+Searching specifically for the version information, we find a article on Packet Storm:
+
+![Packet Storm Request Baskets 1.2.1 Vuln](@assets/security/sau/8-packetstorm.png)
+
+Going through the POC in Packet Storm, the functionality provided doesn't fit our particular use case.
+
+If we navigate back to our target Request Baskets site, we can find some configuration settings.
+
+![Request Baskets configuration settings](@assets/security/sau/9-configuration.png)
+
+These configuration settings let us set up a proxy.
+If we remember back to our Nmap scan, we found that port 80 was filtered and didn't give us much information. 
+We can set up this proxy to forward localhost's port 80, and potentially grab new information that we previously couldn't access. 
+So, let's set up our proxy config:
+
+![Request Baskets proxy configuration](@assets/security/sau/10-proxy-config.png)
+
+We then navigate to our basket and we have a new page:
+
+![Maltrail](@assets/security/sau/11-maltrail.png)
+
+We can see a version number for Maltrail, so that's always a good piece of information to search against for vulnerabilities.
+
+![Maltrail command injection](@assets/security/sau/12-maltrail-injection.png)
+
+We find an article from Rapid7 detailing a command injection vulnerability against our target's version of Maltrail. 
+We can inject arbitrary commands into the username parameter, and importantly, can be done without authentication, as we currently do not have any credentials against our target.
+This is also listed as a 'module', so let's search through Rapid7's Metasploit framework.
+
+Searching through Metasploit, there indeed is a matching module specifically for this vulnerability.
+
+![Metasploit Maltrail exploit](@assets/security/sau/13-msf-maltrail.png)
+
+Let's set the options, check, and run the exploit. The important parameters to keep in mind:
+1. We are setting our target's host and port parameters to point to the open 55555 port, since port 80 is filtered.
+2. We point to our basket's URI, as this will proxy us into the Maltrail service that has the vulnerability.
+
+![msfexploit](@assets/security/sau/14-msfexploit.png)
+
+After running, we get our reverse shell from Meterpreter:
+
+![Meterpreter reverse shell](@assets/security/sau/15-meterpreter-shell.png)
+
+As *puma*, we can now grab our **user.txt** flag!
+
+## Privilege Escalation
+
+Let's check for sudo permissions on **puma**.
+
+![Checking for sudo permissions](@assets/security/sau/16-sudo-check.png)
+
+It looks like we can run a particular *systemctl* command as **puma**. 
+Searching for *systemctl status* vulnerabilities finds a CVE record in MITRE:
+
+![About systemctl exploit](@assets/security/sau/17-systemctl-exploit.png)
+
+It looks like screen size of our terminal is important for this one.
+If our screen isn't large enough to show all the output, we'll launch the *less* pager program. 
+However, this program launches as root, and thus, from *less* we can get our privilege escalation.
+
+Let's run our command that we have sudo privileges for, and intentionally trigger *less*. 
+When the terminal is left hanging, waiting to show the next page, we'll run `!/bin/bash` to spawn a shell.
+As this shell is run from *less* and *less* is run with sudo privileges, we should have root access, and can grab our root flag!
+
+![Root access](@assets/security/sau/x-root.png)

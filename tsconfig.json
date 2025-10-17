@@ -6,7 +6,9 @@
     "baseUrl": ".",
     "paths": {
       "@components/*": ["src/components/*"],
-      "@assets/*": ["src/assets/*"]
+      "@assets/*": ["src/assets/*"],
+      "@htb/*": ["src/content/docs/security/htb/*"],
+      "@progression/*": ["src/content/docs/tech-writing/progression/*"]
     }
   }
 }

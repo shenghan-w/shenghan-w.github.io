@@ -70,40 +70,40 @@ As stated before, solutions exist for tracking workouts, but by providing an eco
 
 For convenience, user flows are shown below. They are a bit unwieldy in a document format, and for a larger, enterprise-level project, something like Confluence should be considered for better structuring and organization.
 
-![Figure 1.1](../../../../assets/tech-writing/progression/fig1-1.png)
+![Figure 1.1](@assets/tech-writing/progression/fig1-1.png)
 *Fig. 1.1 - User Flow for Workout Logging* 
 
-![Figure 1.2](../../../../assets/tech-writing/progression/fig1-2.png)
+![Figure 1.2](@assets/tech-writing/progression/fig1-2.png)
 *Fig. 1.2 - User Flow for Block Planning*
 
-![Figure 1.3](../../../../assets/tech-writing/progression/fig1-3.png)
+![Figure 1.3](@assets/tech-writing/progression/fig1-3.png)
 *Fig. 1.3 - User Flow for Viewing Historical Workouts*
 
-![Figure 1.4](../../../../assets/tech-writing/progression/fig1-4.png)
+![Figure 1.4](@assets/tech-writing/progression/fig1-4.png)
 *Fig. 1.4 - User Flow for Exercise Management*
 
 ## Architecture
 
 At first, Progression will utilize Supabase to provide the backend infrastructure. The goal is to provide easy testing and a quick start-up of the project. For the frontend, Progression will utilize React due to versatility and the myriad of available UI libraries.
 
-![Figure 2.1](../../../../assets/tech-writing/progression/fig2-1.png)
+![Figure 2.1](@assets/tech-writing/progression/fig2-1.png)
 *Fig. 2.1 - Progression’s system architecture*
 
 Once the frontend is finalized, Progression will build out its own backend using Django. This step is necessary due to the nature of Progression as a personal development project, and serves primarily as a learning exercise. For the backend, Python was chosen for its versatility, and Django as the framework to provide abstraction and scalability in the future.
 
-![Figure 2.2](../../../../assets/tech-writing/progression/fig2-1.png)
+![Figure 2.2](@assets/tech-writing/progression/fig2-1.png)
 *Figure 2.2 - Progression’s anticipated architecture*
 
 ## Component Structure
 
-![Figure 3.1](../../../../assets/tech-writing/progression/fig3-1.png)
+![Figure 3.1](@assets/tech-writing/progression/fig3-1.png)
 *Fig. 3.1 - Progression component structure*
 
 Progression’s main components will consist of an exercise management piece and a workout planning piece.
 The Exercise Manager component is responsible for handling updates to the repository of exercises available on the Progression App. The Exercise Manager will be capable of CRUD operations for all exercises, and is also responsible for governing which exercises are available to the Workout Planner.
 The Workout Planner is the main component in Progression. The Workout Planner will be responsible for the UI that enables the main functionalities of Progression: creating and storing workouts and workout templates.
 
-![Figure 3.2](../../../../assets/tech-writing/progression/fig3-2.png)
+![Figure 3.2](@assets/tech-writing/progression/fig3-2.png)
 *Fig. 3.2 - In-depth of Workout Planner component*
 
 Above is a more in-depth view on the Workout Planner component, which encapsulates the three core features of logging workouts, planning workout blocks, and reviewing workout histories. The figure above shows the information flow between these three pieces. UI for each will differ somewhat to provide the best experience. Workout Histories is only expected to read from the database, and will not have any functionality to change data. Block Planner and Workout Logging portions will function similarly, with the main difference being the presence of timestamps in the Workout Logging feature. Block Planner will also feature more scalable UI to support template creation.

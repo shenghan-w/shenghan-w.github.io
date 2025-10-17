@@ -7,7 +7,7 @@ export const onRequest = defineRouteMiddleware((context) => {
 
 	const { pagination } = context.locals.starlightRoute;
 
-	// Filter our sidebar groups that do not include links to the current product.
+	// Filter sidebar groups
 
 	if (context.url.pathname === '/') {
 		context.locals.starlightRoute.hasSidebar = false
@@ -23,7 +23,7 @@ export const onRequest = defineRouteMiddleware((context) => {
 		);
 	};
 
-	// Remove pagination links across product categories.
+	// Remove pagination links across categories
 	if (pagination.prev && !pagination.prev.href.startsWith(currentBase)) {
 		pagination.prev = undefined;
 	}

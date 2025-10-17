@@ -21,24 +21,20 @@ export default defineConfig({
 				}),
 			],
 			
-			// Title
+			// Leading Info
 			title: "Shen's Stuff",
-
-			// Settings
 			tableOfContents: {
 				minHeadingLevel: 2,
 				maxHeadingLevel: 4,
 			},
-
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/shenghan-w' },
 				{icon: 'linkedin', label: 'LinkedIn', href: 'https://www.linkedin.com/in/shenghan-wang-30631573/' },
 			],
-
-			pagination: false,
-
 			favicon: '/favicon.svg',
 
+			// Config
+			pagination: false,
 			expressiveCode: {
 				themes: ['solarized-dark', 'solarized-light']
 			},
@@ -62,14 +58,12 @@ export default defineConfig({
 					],
 				},
 				
-				{ label: 'About My Security Stuff', autogenerate: { directory: 'security/about' }},
 				{ label: 'HackTheBox Write-Ups', autogenerate: { directory: 'security/htb' }},
 				{ label: 'Red Team Notes', autogenerate: { directory: 'security/cheatsheets' }},
 
-				{ label: 'About My Tech Writing', autogenerate: { directory: 'tech-writing/about' }},
-				{ label: 'Progression Docs', autogenerate: { directory: 'tech-writing/progression' }},
-				
-				{ label: 'About My Climbing', autogenerate: { directory: 'climbing/about' }},
+				{ label: 'Progression Docs', autogenerate: { directory: 'tech-writing/progression/docs' }},
+				{ label: 'Progression API', autogenerate: { directory: 'tech-writing/progression/api' }},
+
 				{ label: 'Outdoor Bouldering', autogenerate: { directory: 'climbing/projects' }},
 			],
 		}),
