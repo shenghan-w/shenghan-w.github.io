@@ -6,14 +6,15 @@ sidebar:
 ---
 
 import { Aside, Steps } from '@astrojs/starlight/components';
-import { Image } from 'astro:assets'
+import { Picture } from 'astro:assets'
 import nmapBusqueda from '@assets/security/busqueda/1-nmap.png'
+import searcher from '@assets/security/busqueda/2-searcher.png'
 
 ## Enumeration
 
 Beginning with an nmap scan:
 
-<Image 
+<Picture 
   src={nmapBusqueda}
   priority
   alt="Nmap scan for Busqueda"
@@ -24,19 +25,23 @@ On port 80, our target is serving a website, http:/<i></i>/searcher.htb/, using 
 
 Let's add our target IP and related site to our **/etc/hosts** file and navigate to it.
 
-![Searcher.htb](@assets/security/busqueda/2-searcher.png)
+<Picture 
+  src={searcher}
+  priority
+  alt="HTB Searcher homepage"
+/>
 
 Our target's website is a search engine, pulling from a variety of available options. Running a test search we see:
 
-![Search result](@assets/security/busqueda/3-searchresult.png)
+![Test search](@assets/security/busqueda/3-searchresult.png)
 
 And if we instead select the auto redirect option:
 
-![Search result](@assets/security/busqueda/4-redirect.png)
+![Auto-redirect option](@assets/security/busqueda/4-redirect.png)
 
 The resulting search shows as:
 
-![Search result](@assets/security/busqueda/5-redirectresult.png)
+![Auto-redirect result](@assets/security/busqueda/5-redirectresult.png)
 
 So let's summarize the target's webapp:
 - The target is serving a search engine collection, that runs our inputs through the selected engine as the query
@@ -174,7 +179,7 @@ Looking through the script sourcecode, the most interesting to us is the `full-c
 
 It looks like the script points to a relative path for `full-checkup.sh`, and not an absolute path. It is expecting `full-checkup.sh` to be in the same folder as where the `system-checkup.py` is run.
 
-## Exploit to Sudo
+### Exploit to Sudo
 
 So our path to exploit is to:
 <Steps>
