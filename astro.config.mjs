@@ -52,8 +52,8 @@ export default defineConfig({
 				{
 					label: 'leadingNavLinks',
 					items: [
-						{ label: 'Security Stuff', slug: 'security' },
-						{ label: 'Tech Writing Stuff', slug: 'tech-writing' },
+						{ label: 'Cybersecurity', slug: 'security' },
+						{ label: 'Tech Writing', slug: 'tech-writing' },
 						{ label: 'Climbing Stuff', slug: 'climbing' },
 					],
 				},
